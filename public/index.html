@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omegle Clone</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Omegle Clone</h1>
+    <div id="chat">
+        <div id="messages"></div>
+        <div id="message-box">
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let peer = null;
+
+        // DOM elements
+        const chat = document.getElementById("chat");
+        const messages = document.getElementById("messages");
+        const messageInput = document.getElementById("message-input");
+        const sendBtn = document.getElementById("send-btn");
+
+        // Chat started
+        socket.on("chat-started", (data) => {
+            peer = data.peer;
+            chat.style.display = "block";
+            messages.innerHTML += `<p><strong>Connected to a stranger!</strong></p>`;
+        });
+
+        // Receive a message
+        socket.on("message", ({ from, message }) => {
+            messages.innerHTML += `<p><strong>Stranger:</strong> ${message}</p>`;
+        });
+
+        // Peer disconnected
+        socket.on("peer-disconnected", (peerId) => {
+            if (peer === peerId) {
+                messages.innerHTML += `<p><em>The stranger has disconnected.</em></p>`;
+                peer = null;
+            }
+        });
+
+        // Send a message
+        sendBtn.addEventListener("click", () => {
+            const message = messageInput.value;
+            if (message && peer) {
+                socket.emit("message", { to: peer, message });
+                messages.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+                messageInput.value = "";
+            }
+        });
+    </script>
+</body>
+</html>
